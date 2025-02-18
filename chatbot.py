@@ -32,6 +32,7 @@ class PydanticAIDeps:
 
 # Memory list for storing the latest 3 user inputs and 3 model outputs
 memory: List[str] = []
+show_more_match_count = 5  # Initialize with the default value
 
 
 def update_memory(user_message: str, model_response: str) -> None:
@@ -461,14 +462,17 @@ async def handle_memory_based_queries(ctx: RunContext[PydanticAIDeps], user_quer
 
         # Print classification result
         print(f"Classification result: {classification}")
-
+        print(f"Classification result (raw): {repr(classification)}")
+        print("is the classification equal to show more", classification == "show more")
+        print("is the classification equal to extend", classification == "extend")
+        print("is the classification equal to specific", classification == "specific")
         # Handle classifications using nested if-else
-        if classification == "show more":
+        if classification.strip() == '"show more"':
             print("Handling 'show more' classification.")
-            
+            global show_more_match_count  # Access the global variable
             # Increment match count for more embeddings
-            ctx.deps.match_count += 5
-            print(f"Updated match count: {ctx.deps.match_count}")
+            show_more_match_count += 5
+            print(f"Updated match count: {show_more_match_count}")
 
             query_embedding = await get_embedding(user_query, ctx.deps.openai_client)
             print(f"Query embedding for 'show more': {query_embedding}")
@@ -477,7 +481,7 @@ async def handle_memory_based_queries(ctx: RunContext[PydanticAIDeps], user_quer
                 'match_site_pages',
                 {
                     'query_embedding': query_embedding,
-                    'match_count': ctx.deps.match_count
+                    'match_count': show_more_match_count
                 }
             ).execute()
             print(f"Supabase query result for 'show more': {result.data}")
@@ -503,7 +507,7 @@ async def handle_memory_based_queries(ctx: RunContext[PydanticAIDeps], user_quer
             return "\n\n".join(formatted_experiences)
 
         else:
-            if classification == "extend":
+            if classification == '"extend"':
                 print("Handling 'extend' classification.")
                 
                 # Use the last 2 memory entries and append the new query
@@ -549,7 +553,7 @@ async def handle_memory_based_queries(ctx: RunContext[PydanticAIDeps], user_quer
 
                     # Step 1: Extract the last model response from memory
                     last_model_response = memory[-1]
-
+                    print(f"Last model response: {last_model_response}")
                     # Step 2: Use OpenAI to determine the referenced URL
                     prompt = f"""
                     You are assisting with identifying a referenced experience. Below is the last model response that contains multiple experiences, and a user's query about it. 
@@ -564,7 +568,7 @@ async def handle_memory_based_queries(ctx: RunContext[PydanticAIDeps], user_quer
 
                     Please extract and return the exact URL referenced by the user's query. If no match is found, return "No matching URL found."
                     """
-
+                    print(f"Prompt for URL extraction: {prompt}")
                     # Call OpenAI to process the prompt
                     url_extraction_response = client_work.chat.completions.create(
                         model="gpt-4",
@@ -586,7 +590,7 @@ async def handle_memory_based_queries(ctx: RunContext[PydanticAIDeps], user_quer
                         return "No content was found for the specified experience. Please try again."
 
                     content = result.data[0]['content']
-
+                    print(f"Content for the extracted URL: {content}")
                     # Step 4: Use OpenAI to generate a specific answer based on content and query
                     detail_prompt = f"""
                     You are an assistant providing detailed answers based on a user's query and the content of a specific experience. 
@@ -600,7 +604,7 @@ async def handle_memory_based_queries(ctx: RunContext[PydanticAIDeps], user_quer
 
                     Please provide a detailed and specific answer to the user's query based on the content provided.
                     """
-
+                    print(f"Prompt for detailed response: {detail_prompt}")
                     detail_response = client_work.chat.completions.create(
                         model="gpt-4",
                         messages=[
