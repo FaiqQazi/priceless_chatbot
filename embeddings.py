@@ -11,15 +11,16 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from supabase import create_client, Client
-load_dotenv()
+import streamlit as st
+# load_dotenv()
 
 # Initialize OpenAI and Supabase clients
-openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_SERVICE_KEY")
-)
+openai_client = AsyncOpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
+supabase: Client = create_client(
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_SERVICE_KEY"]
+)
 
 @dataclass
 class ProcessedChunk:
@@ -72,7 +73,7 @@ async def get_title_summary_link_location_date(content: str) -> Dict[str, Any]:
     try:
         # Call OpenAI API with the prompt and content
         response = await openai_client.chat.completions.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+            model=st.secrets.get("LLM_MODEL", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Content:\n{content[:1500]}..."}  # Truncate to avoid token limits

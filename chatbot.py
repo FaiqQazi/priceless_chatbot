@@ -13,14 +13,15 @@ from openai import AsyncOpenAI
 from supabase import Client
 from typing import List
 from openai import OpenAI
+import streamlit as st
 
-load_dotenv()
+# load_dotenv()
 
 client_work = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),  # This is the default and can be omitted
+    api_key=st.secrets["OPENAI_API_KEY"],  
 )
 
-llm = os.getenv('LLM_MODEL', 'gpt-4o-mini')
+llm = st.secrets.get("LLM_MODEL", "gpt-4o-mini")
 model = OpenAIModel(llm)
 
 logfire.configure(send_to_logfire='if-token-present')
