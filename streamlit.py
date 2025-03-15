@@ -26,7 +26,7 @@ from chatbot import chatbot, PydanticAIDeps
 
 # Load environment variables
 from dotenv import load_dotenv
-# load_dotenv()
+load_dotenv()
 openai_client = AsyncOpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 supabase: Client = Client(
@@ -34,6 +34,14 @@ supabase: Client = Client(
     st.secrets["SUPABASE_SERVICE_KEY"]
 )
 
+
+# load_dotenv()
+
+# openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# supabase: Client = Client(
+#     os.getenv("SUPABASE_URL"),
+#     os.getenv("SUPABASE_SERVICE_KEY")
+# )
 # Configure logfire to suppress warnings (optional)
 logfire.configure(send_to_logfire='never')
 
